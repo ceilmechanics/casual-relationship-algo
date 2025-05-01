@@ -1,0 +1,49 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Logs
+*.log
+
+# Local development settings
+.env
+.env.local
+
+# CSV data files
+*.csv
+*.csv.gz
+
+# Output directories
+output*/
+
+# Alibaba datasets
+cluster-trace-microservices-v2022
+capser-output-2022/output-naive-accurate
+2022-shuffled-sample-traces-small
+2022
