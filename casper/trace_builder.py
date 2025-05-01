@@ -189,8 +189,14 @@ class AlibabaTraceBuilder:
             
             # new_traces.drop(
             #     ['service', 'uminstanceid', 'dminstanceid'], axis=1, inplace=True)
-            
+
         new_traces['rt'] = new_traces['rt'].astype(float)
+
+        # ADD FILTER HERE: Filter out rows where rpctype is not "rpc" and rt equals 0
+        original_row_count = len(new_traces)
+        new_traces = new_traces[~((new_traces['rpctype'] != 'rpc') & (new_traces['rt'] == 0))]
+        filtered_row_count = original_row_count - len(new_traces)
+        print(f'Filtered out {filtered_row_count} rows where rpctype is not "rpc" and rt is 0 ({filtered_row_count/original_row_count*100:.2f}%)')
 
         self.open_traces = pd.concat([self.open_traces, new_traces], axis=0)
         self._update_current_trace_ids()
