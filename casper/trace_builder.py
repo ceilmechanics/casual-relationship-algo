@@ -193,10 +193,10 @@ class AlibabaTraceBuilder:
         new_traces['rt'] = new_traces['rt'].astype(float)
 
         # ADD FILTER HERE: Filter out rows where rpctype is not "rpc" and rt equals 0
-        original_row_count = len(new_traces)
-        new_traces = new_traces[~((new_traces['rpctype'] != 'rpc') & (new_traces['rt'] == 0))]
-        filtered_row_count = original_row_count - len(new_traces)
-        print(f'Filtered out {filtered_row_count} rows where rpctype is not "rpc" and rt is 0 ({filtered_row_count/original_row_count*100:.2f}%)')
+        self.original_row_count = len(new_traces)
+        new_traces = new_traces[(new_traces['rpctype'] == 'rpc') & (new_traces['rt'] != 0)]
+        self.filtered_row_count = self.original_row_count - len(new_traces)
+        print(f'Filtered out {self.filtered_row_count} rows where rpctype is not "rpc" OR rt is 0 ({self.filtered_row_count/self.original_row_count*100:.2f}%)')
 
         self.open_traces = pd.concat([self.open_traces, new_traces], axis=0)
         self._update_current_trace_ids()
@@ -392,6 +392,7 @@ class AlibabaTraceBuilder:
         print('cp_affected_traces: ', self.n_cp_affected_traces_in_file)
         print('dl_affected_traces: ', self.n_dl_affected_traces_in_file)
         print('unaffected_traces', self.n_unaffected_traces_in_file)
+        print(f'Filtered out {self.filtered_row_count} rows where rpctype is not "rpc" OR rt is 0 ({self.filtered_row_count/self.original_row_count*100:.2f}%)')
 
         #  delete current processed traces.
         self.processed_traces = pd.DataFrame()
