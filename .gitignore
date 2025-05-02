@@ -39,9 +39,6 @@ htmlcov/
 *.csv
 *.csv.gz
 
-# Output directories
-output*/
-
 # Alibaba datasets
 cluster-trace-microservices-v2022/data
 2022-shuffled-sample-traces-small
