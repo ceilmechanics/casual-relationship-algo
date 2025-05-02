@@ -35,10 +35,6 @@ htmlcov/
 .env
 .env.local
 
-# CSV data files
-*.csv
-*.csv.gz
-
 # Alibaba datasets
 cluster-trace-microservices-v2022/data
 2022-shuffled-sample-traces-small
