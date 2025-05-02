@@ -43,7 +43,7 @@ htmlcov/
 output*/
 
 # Alibaba datasets
-cluster-trace-microservices-v2022
-capser-output-2022/output-naive-accurate
+cluster-trace-microservices-v2022/data
 2022-shuffled-sample-traces-small
+2022-shuffled-sample-traces-large
 2022
