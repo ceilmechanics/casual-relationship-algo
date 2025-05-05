@@ -55,26 +55,26 @@ def process_sibling_files():
                 print(f"Warning: Cannot parse filename {filename}")
                 continue
             
-            # Get number of observations (excluding header)
-            num_observations = len(df) - 1
+            # Get number of observations - directly using len(df)
+            num_observations = len(df)
             
             # Check if execution_order column exists
             if 'execution_order' not in df.columns:
                 print(f"Warning: No execution_order column in {filename}")
                 continue
             
-            # Check execution_order values (skip header row)
-            execution_orders = df['execution_order'].iloc[1:]
+            # Check execution_order values
+            execution_orders = df['execution_order']
             
-            # Check if all are parallel
-            all_parallel = all(order == 'parallel' for order in execution_orders)
+            # Check if all are concurrent (not parallel)
+            all_concurrent = all(order == 'concurrent' for order in execution_orders)
             
-            # Count sequential and parallel
-            num_parallel = sum(1 for order in execution_orders if order == 'concurrent')
+            # Count sequential and concurrent
+            num_concurrent = sum(1 for order in execution_orders if order == 'concurrent')
             num_seq = sum(1 for order in execution_orders if order == 'sequential')
             
-            if all_parallel:
-                # All parallel - add to parallel.csv
+            if all_concurrent:
+                # All concurrent - add to parallel.csv
                 parallel_data.append({
                     'traceid': traceid,
                     'um': um,
@@ -93,7 +93,7 @@ def process_sibling_files():
                         'dm1': dm1,
                         'dm2': dm2,
                         'num_seq': num_seq,
-                        'num_parallel': num_parallel,
+                        'num_parallel': num_concurrent,  # Changed to num_concurrent
                         'num_observations': num_observations
                     })
                     print(f"Unknown: {filename} ({num_observations} observations)")
