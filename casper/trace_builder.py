@@ -44,7 +44,9 @@ import numpy as np
 from sys import exit
 import re
 import math
+import sys
 
+sys.setrecursionlimit(10000)  # Increasing the recursion limit
 
 class AlibabaTraceBuilder:
     def __init__(self, **kwargs):

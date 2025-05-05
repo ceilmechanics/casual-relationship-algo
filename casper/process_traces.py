@@ -7,7 +7,7 @@ output_trace_dir = './capser-output-2022/'
 
 # settings: mode is a list of different trace construction modes
 #           output-mode is output type, can be csv and or json
-kwargs = {"mode": ['naive-accurate'], 'output-mode': ['csv']}
+kwargs = {"mode": ['rebuild'], 'output-mode': ['csv']}
 
 try: 
     builder = trace_builder.AlibabaTraceBuilder(**kwargs)
