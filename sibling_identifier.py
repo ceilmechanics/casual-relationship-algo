@@ -92,11 +92,50 @@ class SimpleSiblingAnalyzer:
         return self.sibling_writers[key]
     
     def write_record(self, record):
-        """Write a single record directly to the appropriate CSV file"""
-        dm1, dm2 = record['dm1'], record['dm2']
-        writer = self.get_writer(dm1, dm2)
-        writer.writerow(record)
-    
+        """Write a single record directly to the appropriate CSV file with consistent dm1/dm2 ordering"""
+        # Create a copy of the record to avoid modifying the original
+        ordered_record = record.copy()
+        
+        # Ensure consistent ordering: always put the lexicographically smaller service as dm1
+        if record['dm1'] > record['dm2']:
+            # Swap the dm1 and dm2 data
+            ordered_record['dm1'] = record['dm2']
+            ordered_record['dm2'] = record['dm1']
+            ordered_record['dminstanceid1'] = record['dminstanceid2']
+            ordered_record['dminstanceid2'] = record['dminstanceid1']
+            ordered_record['dm1_start_time'] = record['dm2_start_time']
+            ordered_record['dm2_start_time'] = record['dm1_start_time']
+        
+        # Get writer with the consistently ordered pair
+        writer = self.get_writer(ordered_record['dm1'], ordered_record['dm2'])
+        writer.writerow(ordered_record)
+
+    # Additionally, you should update create_record logic to ensure consistent creation:
+    def create_record(self, traceid, prefix, um, s1, s2, execution_order):
+        """Create a record with consistent dm1/dm2 ordering"""
+        # Always put the lexicographically smaller service as dm1
+        if s1['dm'] > s2['dm']:
+            dm1_data = s2
+            dm2_data = s1
+        else:
+            dm1_data = s1
+            dm2_data = s2
+        
+        return {
+            'traceid': traceid,
+            'rpcid': prefix,
+            'um': um,
+            'uminstanceid': dm1_data['uminstanceid'],
+            'dm1': dm1_data['dm'],
+            'dminstanceid1': dm1_data['dminstanceid'],
+            'dm1_start_time': dm1_data['timestamp'],
+            'dm2': dm2_data['dm'],
+            'dminstanceid2': dm2_data['dminstanceid'],
+            'dm2_start_time': dm2_data['timestamp'],
+            'execution_order': execution_order
+        }
+
+    # Modified process_single_file method to use the new create_record:
     def process_single_file(self, df, file_idx, total_files):
         """Process a single CSV file's data to find siblings"""
         sibling_stats = defaultdict(lambda: {'total': 0, 'parallel': 0, 'sequential': 0})
@@ -132,26 +171,14 @@ class SimpleSiblingAnalyzer:
                             if s1['dm'] != s2['dm']:  # Different downstream services
                                 execution_order = self.analyze_execution_order(s1, s2)
                                 
-                                # Create record
-                                record = {
-                                    'traceid': traceid,
-                                    'rpcid': prefix,
-                                    'um': um,
-                                    'uminstanceid': s1['uminstanceid'],
-                                    'dm1': s1['dm'],
-                                    'dminstanceid1': s1['dminstanceid'],
-                                    'dm1_start_time': s1['timestamp'],
-                                    'dm2': s2['dm'],
-                                    'dminstanceid2': s2['dminstanceid'],
-                                    'dm2_start_time': s2['timestamp'],
-                                    'execution_order': execution_order
-                                }
+                                # Create record with consistent ordering
+                                record = self.create_record(traceid, prefix, um, s1, s2, execution_order)
                                 
                                 # Write directly to file
                                 self.write_record(record)
                                 records_written += 1
                                 
-                                # Track statistics
+                                # Track statistics with consistent key
                                 key = tuple(sorted([s1['dm'], s2['dm']]))
                                 sibling_stats[key]['total'] += 1
                                 if execution_order == 'concurrent':
@@ -162,7 +189,7 @@ class SimpleSiblingAnalyzer:
         # Print statistics for this file
         print(f"   ✓ Processed {records_written:,} sibling records")
         print(f"   ✓ Found {len(sibling_stats):,} unique sibling pairs")
-        
+
         # Show top 5 most frequent sibling pairs
         if sibling_stats:
             sorted_stats = sorted(sibling_stats.items(), key=lambda x: x[1]['total'], reverse=True)
@@ -322,14 +349,14 @@ class SimpleSiblingAnalyzer:
 # Example usage
 if __name__ == "__main__":
     # Initialize simple analyzer
-    analyzer = SimpleSiblingAnalyzer("output-rebuild")
+    analyzer = SimpleSiblingAnalyzer("capser-output-2022/output-rebuild")
     
     # Run analysis without processing contextual data
-    # analyzer.run_analysis(output_dir="output")
+    analyzer.run_analysis(output_dir="output")
     
     # Uncomment the following to process contextual data if needed:
-    analyzer.run_analysis(
-        output_dir="output",
-        contextual_base_dir="clusterdata/cluster-trace-microservices-v2022/data",
-        process_contextual=True
-    )
+    # analyzer.run_analysis(
+    #     output_dir="output",
+    #     contextual_base_dir="clusterdata/cluster-trace-microservices-v2022/data",
+    #     process_contextual=True
+    # )

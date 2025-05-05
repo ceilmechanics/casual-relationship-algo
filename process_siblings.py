@@ -43,19 +43,21 @@ def process_sibling_files():
             # Read CSV file
             df = pd.read_csv(csv_file)
             
-            # Extract information from filename
-            # Assuming format: traceid_um_dm1_dm2.csv
-            name_parts = filename.replace('.csv', '').split('_')
-            if len(name_parts) >= 4:
-                traceid = name_parts[0]
-                um = name_parts[1]
-                dm1 = name_parts[2]
-                dm2 = name_parts[3]
+            # Extract information from CSV columns
+            # Extract um, dm1, dm2 from the first row's columns
+            if len(df) > 0:
+                um = df['um'].iloc[0] if 'um' in df.columns else None
+                dm1 = df['dm1'].iloc[0] if 'dm1' in df.columns else None
+                dm2 = df['dm2'].iloc[0] if 'dm2' in df.columns else None
             else:
-                print(f"Warning: Cannot parse filename {filename}")
+                um = dm1 = dm2 = None
+            
+            # Check if we have all required information
+            if um is None or dm1 is None or dm2 is None:
+                print(f"Warning: Missing required column data in {filename}")
                 continue
             
-            # Get number of observations - directly using len(df)
+            # Get number of observations
             num_observations = len(df)
             
             # Check if execution_order column exists
@@ -66,62 +68,71 @@ def process_sibling_files():
             # Check execution_order values
             execution_orders = df['execution_order']
             
-            # Check if all are concurrent (not parallel)
+            # Check if all are concurrent
             all_concurrent = all(order == 'concurrent' for order in execution_orders)
             
             # Count sequential and concurrent
             num_concurrent = sum(1 for order in execution_orders if order == 'concurrent')
             num_seq = sum(1 for order in execution_orders if order == 'sequential')
             
+            # print(f"File: {filename}")
+            # print(f"  UM: {um}, DM1: {dm1}, DM2: {dm2}")
+            # print(f"  Observations: {num_observations}")
+            # print(f"  Concurrent: {num_concurrent}, Sequential: {num_seq}")
+            
             if all_concurrent:
                 # All concurrent - add to parallel.csv
                 parallel_data.append({
-                    'traceid': traceid,
                     'um': um,
                     'dm1': dm1,
                     'dm2': dm2,
                     'num_observations': num_observations
                 })
-                print(f"Parallel: {filename} ({num_observations} observations)")
+                print(f"  → Parallel: {filename} ({num_observations} observations)")
             else:
                 # Mixed execution orders
                 if num_observations < 1000:
                     # Small dataset - add to unknown.csv
                     unknown_data.append({
-                        'traceid': traceid,
                         'um': um,
                         'dm1': dm1,
                         'dm2': dm2,
                         'num_seq': num_seq,
-                        'num_parallel': num_concurrent,  # Changed to num_concurrent
+                        'num_parallel': num_concurrent,
                         'num_observations': num_observations
                     })
-                    print(f"Unknown: {filename} ({num_observations} observations)")
+                    print(f"  → Unknown: {filename} ({num_observations} observations)")
                 else:
                     # Large dataset - copy to uncertain folder
                     output_path = os.path.join("output/res/uncertain", filename)
                     shutil.copy2(csv_file, output_path)
-                    print(f"Uncertain: {filename} ({num_observations} observations)")
+                    print(f"  → Uncertain: {filename} ({num_observations} observations)")
                     
                     # Track largest uncertain service
                     if num_observations > max_uncertain_observations:
                         max_uncertain_observations = num_observations
                         largest_uncertain_service = filename
+            print()
         
         except Exception as e:
             print(f"Error processing {filename}: {e}")
+            print()
     
     # Save parallel.csv
     if parallel_data:
         parallel_df = pd.DataFrame(parallel_data)
         parallel_df.to_csv("output/res/parallel.csv", index=False)
         print(f"\nCreated output/res/parallel.csv with {len(parallel_data)} entries")
+        print("Sample entries:")
+        print(parallel_df.head())
     
     # Save unknown.csv
     if unknown_data:
         unknown_df = pd.DataFrame(unknown_data)
         unknown_df.to_csv("output/res/unknown.csv", index=False)
-        print(f"Created output/res/unknown.csv with {len(unknown_data)} entries")
+        print(f"\nCreated output/res/unknown.csv with {len(unknown_data)} entries")
+        print("Sample entries:")
+        print(unknown_df.head())
     
     # Print largest uncertain service
     print("\n" + "="*50)

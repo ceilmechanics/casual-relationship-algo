@@ -28,6 +28,17 @@ total: 786614  unaffected:  93.57435794430306 %
 Run `sibling_identifier.py` to identify all sibling service pairs.  
 Each sibling pair will be saved as a separate CSV file in the `output/siblings/` directory: `output/siblings/sibling_<dm1>_<dm2>.csv`
 
+```
+TOTAL SUMMARY:
+   • Unique sibling pairs: 22,117
+   • Total records: 1,420,971
+   • Parallel executions: 220,280 (15.5%)
+   • Sequential executions: 1,200,691 (84.5%)
+
+📁 OUTPUT LOCATION: output/siblings/
+⏱️ Largest timestamp: 179999
+```
+
 Here, `<dm1>` and `<dm2>` are downstream microservices (child services) that share the same upstream parent (`um`).
 
 Each `sibling_<dm1>_<dm2>.csv` file follows the schema below:
@@ -59,34 +70,45 @@ output/contextual
 
 ---
 
-
 ### **Sibling Pair Categorization**
 
 For each sibling pair:
 
-- If it contains **only parallel (concurrent)** execution patterns, it is written to:
+- If a sibling pair contains **only parallel (concurrent)** execution patterns, it is written to: `output/res/parallel.csv`.  
 
-  ```
-  output/res/parallel.csv
-  ```
+    Created output/res/parallel.csv with **1556** entries  
+
+  |     um     |    dm1    |    dm2    | num_observations |
+  |------------|-----------|-----------|------------------|
+  | MS_64512   | MS_70124  | MS_19439  | 7                |
+  | MS_51975   | MS_32628  | MS_37363  | 5                |
+  | MS_2780    | MS_58932  | MS_69982  | 1                |
+  | MS_18238   | MS_18356  | MS_9943   | 2                |
+  | MS_14760   | MS_26727  | MS_73340  | 1                |
+
+
 
 - If it contains **mixed execution patterns** but has **fewer than 1000 total observations**, it is categorized as **unknown** due to insufficient data for statistical inference:
 
-  ```
-  output/res/unknown.csv
-  ```
+  Created `output/res/unknown.csv` with **19591** entries 
 
-The rest sibling.csv is copied to the `output/res/uncertain` folder.
-```
-Created output/res/parallel.csv with 1556 entries  
-Created output/res/unknown.csv with 19591 entries 
+    |     um     |    dm1    |    dm2    | num_seq | num_parallel | num_observations |
+    |------------|-----------|-----------|---------|---------------|------------------|
+    | MS_66647   | MS_45042  | MS_64565  |    8    |       0       |        8         |
+    | MS_2120    | MS_53946  | MS_6429   |   37    |       0       |       37         |
+    | MS_71956   | MS_34796  | MS_56926  |    6    |      14       |       20         |
+    | MS_70114   | MS_24612  | MS_28020  |    3    |       0       |        3         |
+    | MS_31441   | MS_18792  | MS_65930  |    8    |       0       |        8         |
 
-Largest uncertain service: sibling_MS_15934_MS_51006.csv
-Number of observations: 59133
 
-Note: This pair contains an unknown `um`, so the parent chi-square test cannot be performed.  
-However, logistic regression can still be run using system load and call rates.
-```
+- The rest sibling.csv is copied to the `output/res/uncertain` folder.
+    ```
+    Largest uncertain service: sibling_MS_15934_MS_51006.csv
+    Number of observations: 59133
+
+    Note: This pair contains an unknown `um`, so the parent chi-square test cannot be performed.  
+    However, logistic regression can still be run using system load and call rates.
+    ```
 
 ---
 
@@ -96,7 +118,7 @@ Run `find_top5.py` to list the largest sibling files by observation count.
 
 ---
 
-#### 🏆 **Top 5 Largest CSV Files (Sequential Only, No Unknowns):**
+#### 🏆 **Top 5 Largest CSV Files** (Mixed execution pattern, By TOTAL OBSERVATIONS, without (?) or unknown services):
 
 | Rank | File Name                                | Rows  | Concurrent | Sequential | Path                                               |
 |------|------------------------------------------|-------|------------|------------|----------------------------------------------------|
