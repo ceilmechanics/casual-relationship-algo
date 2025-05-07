@@ -228,11 +228,7 @@ class SimpleSiblingAnalyzer:
             total_records += len(df)
             total_parallel += file_parallel
             total_sequential += file_sequential
-            
-            # print(f"\n📁 {file}")
-            # print(f"   ├─ Total records: {len(df):,}")
-            # print(f"   ├─ Unique traces: {unique_traces:,}")
-            # print(f"   └─ Execution: {file_parallel:,} parallel, {file_sequential:,} sequential")
+
         
         print("\n" + "-"*60)
         print(f"TOTAL SUMMARY:")
@@ -242,37 +238,7 @@ class SimpleSiblingAnalyzer:
         print(f"   • Sequential executions: {total_sequential:,} ({total_sequential/total_records*100:.1f}%)")
         print("-"*60)
     
-    def process_contextual_data(self, base_dir, output_dir="output/contextual"):
-        """Process contextual data from MSMetrics, MSRTMCR, and NodeMetrics using CSVFilter"""
-        if not CSV_FILTER_AVAILABLE:
-            print("CSVFilter not available. Skipping contextual data processing.")
-            return
-            
-        if self.largest_timestamp is None:
-            print("Error: largest_timestamp not set. Run the analysis first.")
-            return
-        
-        cutoff_timestamp = self.largest_timestamp + 60000
-        print(f"Filtering contextual data with cutoff timestamp: {cutoff_timestamp}")
-        
-        # try:
-        #     # Check if directories exist
-        #     for dir_name in ["MSMetrics", "MSRTMCR", "NodeMetrics"]:
-        #         dir_path = os.path.join(base_dir, dir_name)
-        #         if not os.path.exists(dir_path):
-        #             print(f"Warning: Directory {dir_path} does not exist. Skipping...")
-        #             continue
-                
-        #         print(f"Processing {dir_name}...")
-        #         # Fix: Use correct parameters for CSVFilter.process_metric_directory
-        #         # Parameters are: input_dir, metric_type, cutoff_timestamp
-        #         CSVFilter.process_metric_directory(dir_path, dir_name, cutoff_timestamp)
-                
-        # except Exception as e:
-        #     print(f"Error processing contextual data: {str(e)}")
-        #     print("Skipping contextual data processing...")
-    
-    def run_analysis(self, output_dir="output", contextual_base_dir=None, process_contextual=False):
+    def run_analysis(self, output_dir="output"):
         """Run the complete analysis pipeline"""
         print("\n⚡ STARTING DIRECT-WRITE SIBLING ANALYSIS")
         print("="*60)
@@ -325,19 +291,6 @@ class SimpleSiblingAnalyzer:
         # Analyze output files
         self.analyze_output_files()
         
-        # Process contextual data if requested and base directory provided
-        if process_contextual and contextual_base_dir:
-            print("\n" + "="*60)
-            print("PROCESSING CONTEXTUAL DATA")
-            print("="*60)
-            self.process_contextual_data(contextual_base_dir, os.path.join(output_dir, "contextual"))
-            print("\n✅ Contextual data processing complete!")
-        elif contextual_base_dir:
-            print("\n" + "="*60)
-            print("SKIPPING CONTEXTUAL DATA")
-            print("="*60)
-            print("To process contextual data, set process_contextual=True")
-        
         # Final summary
         print("\n" + "="*60)
         print("🎉 ANALYSIS COMPLETE!")
@@ -354,9 +307,3 @@ if __name__ == "__main__":
     # Run analysis without processing contextual data
     analyzer.run_analysis(output_dir="output")
     
-    # Uncomment the following to process contextual data if needed:
-    # analyzer.run_analysis(
-    #     output_dir="output",
-    #     contextual_base_dir="clusterdata/cluster-trace-microservices-v2022/data",
-    #     process_contextual=True
-    # )

@@ -90,3 +90,30 @@ Files with (?) or unknown: 24
 
 Largest overall file: sibling_MS_53745_MS_63670.csv (47835 rows)
 Largest mixed execution file: sibling_MS_40123_MS_59532.csv (17254 rows)
+
+
+Running regression analysis on output/contextual_MS_52394.csv ...
+
+===== Logistic Regression Results =====
+Intercept: 3.5229
+Coefficient for dm1_system_load: 0.5590
+Coefficient for dm1_mcr: 7.3447e-07
+Accuracy (R² Score): 0.9738
+
+Odds Ratio for dm1_system_load: 1.7489
+Odds Ratio for dm1_mcr: 1.0000
+=======================================
+
+
+
+Running regression analysis on output/contextual_MS_29421.csv ...
+
+===== Logistic Regression Results =====
+Intercept: 5.4375
+Coefficient for dm1_system_load: 0.0071
+Coefficient for dm1_mcr: -7.2571e-08s
+Accuracy (R² Score): 0.9956
+
+Odds Ratio for dm1_system_load: 1.0072
+Odds Ratio for dm1_mcr: 1.0000
+=======================================
