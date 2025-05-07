@@ -40,5 +40,6 @@ cluster-trace-microservices-v2022/data
 2022-shuffled-sample-traces-small
 2022-shuffled-sample-traces-large
 
-output
-capser-output-2022
+/casper/
+/output/
+/capser-output-2022/
