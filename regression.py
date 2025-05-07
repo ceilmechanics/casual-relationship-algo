@@ -6,46 +6,49 @@ def calculate_system_load(filtered):
     filtered['dm1_system_load'] = 0.7 * filtered['dm1_cpu'] + 0.3 * filtered['dm1_memory']
     return filtered
 
-def regression_analysis(csv_path):
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+
+def regression_analysis_with_stats(csv_path):
     print(f"Running regression analysis on {csv_path} ...")
     df = pd.read_csv(csv_path)
 
+    # Convert to numeric
     df['dm1_cpu'] = pd.to_numeric(df['dm1_cpu'], errors='coerce')
     df['dm1_memory'] = pd.to_numeric(df['dm1_memory'], errors='coerce')
     df['dm1_mcr'] = pd.to_numeric(df['dm1_mcr'], errors='coerce')
     df['dm1_system_load'] = 0.7 * df['dm1_cpu'] + 0.3 * df['dm1_memory']
-    # Convert lag columns and calculate their average
     df['dm1_system_lag'] = pd.to_numeric(df['dm1_system_lag'], errors='coerce')
     df['dm1_mcr_lag'] = pd.to_numeric(df['dm1_mcr_lag'], errors='coerce')
-    # df['dm1_avg_lag'] = df[['dm1_system_lag', 'dm1_mcr_lag']].mean(axis=1)
 
-    regression_data = df[df[['dm1_system_load', 'dm1_mcr']].notna().all(axis=1)].copy()
+    # Map execution_order
+    execution_order_map = {'sequential': 0, 'concurrent': 1}
+    df['execution_order'] = df['execution_order'].map(execution_order_map)
 
-    if regression_data.empty:
-        print("No valid rows for regression.")
+    regression_data = df.dropna(subset=['dm1_system_load', 'dm1_mcr', 'execution_order'])
+
+    if regression_data['execution_order'].nunique() < 2:
+        print("Only one class present. Skipping regression.")
         return
 
-    if regression_data['execution_order'].dtype == object:
-        y = pd.Categorical(regression_data['execution_order']).codes
-    else:
-        y = regression_data['execution_order'].values
+    y = regression_data['execution_order']
+    X = regression_data[['dm1_system_load', 'dm1_mcr']]
+    X = sm.add_constant(X)  # Add intercept
 
-    X = regression_data[['dm1_system_load', 'dm1_mcr']].values
+    model = sm.Logit(y, X)
+    result = model.fit()
 
-    model = LogisticRegression()
-    model.fit(X, y)
+    print(result.summary())
 
-    print("\n===== Logistic Regression Results =====")
-    print(f"Intercept: {model.intercept_[0]:.4f}")
-    print(f"Coefficient for dm1_system_load: {model.coef_[0][0]:.4f}")
-    print(f"Coefficient for dm1_mcr: {model.coef_[0][1]:.4e}")
-    print(f"Accuracy (R² Score): {model.score(X, y):.4f}")
+    # Also print odds ratios and confidence intervals
+    odds_ratios = np.exp(result.params)
+    conf = result.conf_int()
+    conf['OR_lower'] = np.exp(conf[0])
+    conf['OR_upper'] = np.exp(conf[1])
 
-    # Odds ratios
-    odds_ratios = np.exp(model.coef_[0])
-    print(f"\nOdds Ratio for dm1_system_load: {odds_ratios[0]:.4f}")
-    print(f"Odds Ratio for dm1_mcr: {odds_ratios[1]:.4f}")
-    print("=======================================\n")
+    print("\nOdds Ratios with 95% CI:")
+    print(pd.concat([odds_ratios, conf[['OR_lower', 'OR_upper']]], axis=1).rename(columns={0: 'OR'}))
 
     # Print average and std for lag columns
     print(f"\nAvg dm1_system_lag: {regression_data['dm1_system_lag'].mean():.4f} ± {regression_data['dm1_system_lag'].std():.4f}")
@@ -54,4 +57,4 @@ def regression_analysis(csv_path):
 
 if __name__ == "__main__":
     # Replace with your actual CSV path or pass it dynamically
-    regression_analysis("output/contextual_MS_52394.csv")
+    regression_analysis_with_stats("output/contextual_MS_52394.csv")
